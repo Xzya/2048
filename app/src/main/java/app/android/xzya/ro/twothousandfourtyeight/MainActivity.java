@@ -20,6 +20,8 @@ import android.widget.TextView;
 
 public class MainActivity extends ActionBarActivity {
 
+    private static Game game;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -50,6 +52,10 @@ public class MainActivity extends ActionBarActivity {
         if (id == R.id.action_settings) {
             return true;
         }
+        if (id == R.id.new_game) {
+            game = new Game(this);
+            return true;
+        }
 
         return super.onOptionsItemSelected(item);
     }
@@ -65,53 +71,54 @@ public class MainActivity extends ActionBarActivity {
         public static Button[] gridIDs;
         private LinearLayout grid;
 
-        private Game game;
-
         public PlaceholderFragment() {
         }
 
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
-            View rootView = inflater.inflate(R.layout.test, container, false);
+            View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
-            gridIDs = new Button[n*n];
-            score = (TextView)rootView.findViewById(R.id.score);
-            view = (View)rootView.findViewById(R.id.view1);
-            gridIDs[0] = (Button)rootView.findViewById(R.id.g00);
-            gridIDs[1] = (Button)rootView.findViewById(R.id.g01);
-            gridIDs[2] = (Button)rootView.findViewById(R.id.g02);
-            gridIDs[3] = (Button)rootView.findViewById(R.id.g03);
-            gridIDs[4] = (Button)rootView.findViewById(R.id.g10);
-            gridIDs[5] = (Button)rootView.findViewById(R.id.g11);
-            gridIDs[6] = (Button)rootView.findViewById(R.id.g12);
-            gridIDs[7] = (Button)rootView.findViewById(R.id.g13);
-            gridIDs[8] = (Button)rootView.findViewById(R.id.g20);
-            gridIDs[9] = (Button)rootView.findViewById(R.id.g21);
-            gridIDs[10] = (Button)rootView.findViewById(R.id.g22);
-            gridIDs[11] = (Button)rootView.findViewById(R.id.g23);
-            gridIDs[12] = (Button)rootView.findViewById(R.id.g30);
-            gridIDs[13] = (Button)rootView.findViewById(R.id.g31);
-            gridIDs[14] = (Button)rootView.findViewById(R.id.g32);
-            gridIDs[15] = (Button)rootView.findViewById(R.id.g33);
+            gridIDs = new Button[n * n];
+            score = (TextView) rootView.findViewById(R.id.score);
+            view = (View) rootView.findViewById(R.id.view1);
+            gridIDs[0] = (Button) rootView.findViewById(R.id.g00);
+            gridIDs[1] = (Button) rootView.findViewById(R.id.g01);
+            gridIDs[2] = (Button) rootView.findViewById(R.id.g02);
+            gridIDs[3] = (Button) rootView.findViewById(R.id.g03);
+            gridIDs[4] = (Button) rootView.findViewById(R.id.g10);
+            gridIDs[5] = (Button) rootView.findViewById(R.id.g11);
+            gridIDs[6] = (Button) rootView.findViewById(R.id.g12);
+            gridIDs[7] = (Button) rootView.findViewById(R.id.g13);
+            gridIDs[8] = (Button) rootView.findViewById(R.id.g20);
+            gridIDs[9] = (Button) rootView.findViewById(R.id.g21);
+            gridIDs[10] = (Button) rootView.findViewById(R.id.g22);
+            gridIDs[11] = (Button) rootView.findViewById(R.id.g23);
+            gridIDs[12] = (Button) rootView.findViewById(R.id.g30);
+            gridIDs[13] = (Button) rootView.findViewById(R.id.g31);
+            gridIDs[14] = (Button) rootView.findViewById(R.id.g32);
+            gridIDs[15] = (Button) rootView.findViewById(R.id.g33);
 //            grid = (LinearLayout)rootView.findViewById(R.id.grid);
 
-            view.setOnTouchListener(new OnSwipeTouchListener(getActivity()){
+            view.setOnTouchListener(new OnSwipeTouchListener(getActivity()) {
                 public void onSwipeTop() {
                     //				Toast.makeText(GameActivity.this, "top", Toast.LENGTH_SHORT).show();
                     game.up();
                     refreshGrid();
                 }
+
                 public void onSwipeRight() {
                     //				Toast.makeText(GameActivity.this, "right", Toast.LENGTH_SHORT).show();
                     game.right();
                     refreshGrid();
                 }
+
                 public void onSwipeLeft() {
                     //				Toast.makeText(GameActivity.this, "left", Toast.LENGTH_SHORT).show();
                     game.left();
                     refreshGrid();
                 }
+
                 public void onSwipeBottom() {
                     //				Toast.makeText(GameActivity.this, "bottom", Toast.LENGTH_SHORT).show();
                     game.down();
@@ -119,41 +126,19 @@ public class MainActivity extends ActionBarActivity {
                 }
             });
 
-            game = new Game();
+            game = new Game(getActivity());
             refreshGrid();
-
-
 
 
             return rootView;
         }
 
 
-        public void refreshGrid(){
+        public void refreshGrid() {
 
-//            TransitionManager.beginDelayedTransition(grid);
-//
-//            RelativeLayout.LayoutParams positionRules = new RelativeLayout.LayoutParams(
-//                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT
-//            );
-
-//            gridIDs[0].setBackgroundColor(Color.BLACK);
-//
-//            float originalX = gridIDs[0].getX(), newX = gridIDs[1].getX(), originalY = gridIDs[0].getY(), newY = gridIDs[1].getY();
-//
-//            TranslateAnimation animation = new TranslateAnimation(originalX-10, newX-10, originalY-10, newY-10);
-//            animation.setDuration(300);
-//
-//            gridIDs[0].startAnimation(animation);
-
-            for (int i = 0; i < n; i++){
-                for (int j = 0; j < n; j++){
-
-                }
-            }
             score.setText("Score:\n" + String.valueOf(game.getScore()));
 
-            if (game.isGameOver()){
+            if (game.isGameOver()) {
                 new AlertDialog.Builder(getActivity())
                         .setTitle("Game Over")
                         .setMessage("Do you want to start over?")
@@ -162,7 +147,7 @@ public class MainActivity extends ActionBarActivity {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
                                 // TODO Auto-generated method stub
-                                game = new Game();
+                                game = new Game(getActivity());
                                 refreshGrid();
                             }
                         })
@@ -177,15 +162,13 @@ public class MainActivity extends ActionBarActivity {
                         .show();
             }
         }
-
-
     }
 
     private static class OnSwipeTouchListener implements View.OnTouchListener {
 
         private final GestureDetector gestureDetector;
 
-        public OnSwipeTouchListener (Context ctx){
+        public OnSwipeTouchListener(Context ctx) {
             gestureDetector = new GestureDetector(ctx, new GestureListener());
         }
 
@@ -214,8 +197,7 @@ public class MainActivity extends ActionBarActivity {
                             }
                         }
                         result = true;
-                    }
-                    else if (Math.abs(diffY) > SWIPE_THRESHOLD && Math.abs(velocityY) > SWIPE_VELOCITY_THRESHOLD) {
+                    } else if (Math.abs(diffY) > SWIPE_THRESHOLD && Math.abs(velocityY) > SWIPE_VELOCITY_THRESHOLD) {
                         if (diffY > 0) {
                             onSwipeBottom();
                         } else {
@@ -243,11 +225,6 @@ public class MainActivity extends ActionBarActivity {
         public void onSwipeBottom() {
         }
 
-        //		@Override
-        //		public boolean onTouch(View v, MotionEvent event) {
-        //			// TODO Auto-generated method stub
-        //			return false;
-        //		}
         public boolean onTouch(View v, MotionEvent event) {
             return gestureDetector.onTouchEvent(event);
         }

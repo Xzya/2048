@@ -11,7 +11,7 @@ public class Colors {
     static int lightText = Color.parseColor("#f9f6f2");
     static int darkText = Color.parseColor("#776e65");
 
-    static int V0 = Color.parseColor("#ccc0b3");
+    static int V0 = Color.parseColor("#cec3b6");
     static int V2 = Color.parseColor("#eee4da");
     static int V4 = Color.parseColor("#ede0c8");
     static int V8 = Color.parseColor("#f2b179");
@@ -25,9 +25,9 @@ public class Colors {
     static int V2048 = Color.parseColor("#edc22e");
     static int V4096 = Color.parseColor("#3c3a32");
 
-    public static void changeColor(Button b){
+    public static void changeColor(Button b) {
         String value = String.valueOf(b.getText().toString());
-        switch (value){
+        switch (value) {
             case "":
                 return;
             case "0":

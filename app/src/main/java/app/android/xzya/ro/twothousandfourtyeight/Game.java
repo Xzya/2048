@@ -1,8 +1,13 @@
 package app.android.xzya.ro.twothousandfourtyeight;
 
-import android.annotation.SuppressLint;
+import android.content.Context;
+import android.os.Handler;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.view.animation.TranslateAnimation;
 import android.widget.Button;
+
+import java.util.ArrayList;
 
 /**
  * Created by Xzya on 1/3/2015.
@@ -13,6 +18,9 @@ public class Game {
     private int score;
     private Cell[] board;
     private boolean gameOver;
+    private Context ctx;
+    Handler mainHandler;
+    Animation fadeInAnimation;
 
     public void setGameOver(boolean gameOver) {
         this.gameOver = gameOver;
@@ -38,7 +46,7 @@ public class Game {
         return n;
     }
 
-    public Game() {
+    public Game(Context ctx) {
         //create the board
         this.score = 0;
         this.gameOver = false;
@@ -48,6 +56,10 @@ public class Game {
                 board[(i * n) + j] = new Cell();
             }
         }
+        this.ctx = ctx;
+        mainHandler = new Handler(ctx.getMainLooper());
+        fadeInAnimation = AnimationUtils.loadAnimation(ctx, R.anim.abc_fade_in);
+        fadeInAnimation.setDuration(300);
 
         generateInitial();
 
@@ -103,6 +115,8 @@ public class Game {
         //add values to the generated points
         board[(ax * n) + ay].setValue(2);
         board[(bx * n) + by].setValue(2);
+
+        refreshColors();
     }
 
     public void generateNewValue() {
@@ -114,10 +128,34 @@ public class Game {
             ay = (int) (Math.random() * n);
         }
         board[(ax * n) + ay] = new Cell(2);
+
+        final Button temp = MainActivity.PlaceholderFragment.gridIDs[(ax * n) + ay];
+
+        if ((temp.getAnimation() == null)) {
+            changeColorAndText(temp, board[(ax * n) + ay]);
+//            temp.startAnimation(fadeInAnimation);
+
+        } else {
+            final int x = ax, y = ay;
+            temp.getAnimation().setAnimationListener(new Animation.AnimationListener() {
+                @Override
+                public void onAnimationStart(Animation animation) {
+                }
+
+                @Override
+                public void onAnimationEnd(Animation animation) {
+                    temp.startAnimation(fadeInAnimation);
+                    changeColorAndText(temp, board[(x * n) + y]);
+                }
+
+                @Override
+                public void onAnimationRepeat(Animation animation) {
+                }
+            });
+        }
     }
 
-    @SuppressLint("NewApi")
-    public void moveButton(Button from, Button to) {
+    public void moveButton(final Button from, final Button to, final Cell fromC, final Cell toC) {
 
         float fromX, fromY, toX, toY;
         fromX = from.getX();
@@ -125,86 +163,90 @@ public class Game {
         toX = to.getX();
         toY = to.getY();
 
-        TranslateAnimation animation = new TranslateAnimation(
+        final TranslateAnimation animation = new TranslateAnimation(
                 0,//fromY-10,
                 toX - fromX,
                 0,//fromX-10,
                 toY - fromY
         );
         animation.setDuration(200);
-//        animation.setFillAfter(true);
-
-        from.bringToFront();
-        from.startAnimation(animation);
-
-//        TranslateAnimation anim = new TranslateAnimation(0, -toY, 0, -toX);
-//        anim.setDuration(1000);
-//        anim.setAnimationListener(new Animation.AnimationListener() {
-//
-//            @Override
-//            public void onAnimationStart(Animation animation) {
-//                // TODO Auto-generated method stub
-//
-//            }
-//
-//            @Override
-//            public void onAnimationRepeat(Animation animation) {
-//                // TODO Auto-generated method stub
-//
-//            }
-//
-//            @SuppressLint("NewApi")
-//            @Override
-//            public void onAnimationEnd(Animation animation) {
-//                // TODO Auto-generated method stub
-//                //				RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams)start.getLayoutParams();
-//                //				params.topMargin += 0;
-//                //				params.leftMargin += 150;
-//                //				params.setMargins(0, 150, 0, 0);
-//                //				from.setX(toX);
-////				from.setY(toY);
-////				from.setX(toX);
-//            }
-//        });
-//
-//        from.startAnimation(anim);
-    }
-
-    public void refresh(int[] fromJ, int[] fromI, int[] toJ, int[] toI){
-        for (int i = 0; i < n; i++){
-            for (int j = 0; j < n; j++){
-                //move the button
-                if (fromJ[(i*n)+j] != toJ[(i*n)+j] || fromI[(i*n)+j] != toI[(i*n)+j]){
-                    moveButton(MainActivity.PlaceholderFragment.gridIDs[(fromI[(i * n) + j] * n) + fromJ[(i * n) + j]], MainActivity.PlaceholderFragment.gridIDs[(toI[(i * n) + j] * n) + toJ[(i * n) + j]]);
-                }
-
-                String value = String.valueOf(getBoard()[(i * n) + j].getValue());
-                if (!value.equals("0")){
-//                    MainActivity.PlaceholderFragment.gridIDs[(i*n)+j].setText(String.valueOf(getBoard()[(toI[(i*n)+j]*n)+toJ[(i*n)+j]].getValue()));
-
-                    MainActivity.PlaceholderFragment.gridIDs[(i*n)+j].setText(value);
-                    Colors.changeColor(MainActivity.PlaceholderFragment.gridIDs[(i*n)+j]);
-                } else {
-                    MainActivity.PlaceholderFragment.gridIDs[(i*n)+j].setText("");
-                    MainActivity.PlaceholderFragment.gridIDs[(i*n)+j].setBackgroundColor(Colors.V0);
-                }
-
+        animation.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
             }
-        }
-        refreshColors();
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+
+                animation = new TranslateAnimation(0.0f, 0.0f, 0.0f, 0.0f);
+                animation.setDuration(1);
+
+                from.startAnimation(animation);
+
+                changeColorAndText(from, fromC);
+                changeColorAndText(to, toC);
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {
+            }
+        });
+
+        mainHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                from.bringToFront();
+                from.startAnimation(animation);
+            }
+        });
     }
 
-    private void refreshColors(){
-        for (int i = 0; i < n; i++){
-            for (int j = 0; j < n; j++){
+    public void changeColorAndText(Button button, Cell buttonC) {
+        String fromValue = String.valueOf(buttonC.getValue());
+        if (!fromValue.equals("0")) {
+            button.setText(fromValue);
+            Colors.changeColor(button);
+        } else {
+            button.setText("");
+            button.setBackgroundColor(Colors.V0);
+        }
+    }
+
+    public void refresh(final int[] fromJ, final int[] fromI, final int[] toJ, final int[] toI) {
+        final ArrayList<Button> alreadyChanghed = new ArrayList<Button>();
+        Thread t = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                for (int i = 0; i < n; i++) {
+                    for (int j = 0; j < n; j++) {
+                        //move the button
+                        if (fromJ[(i * n) + j] != toJ[(i * n) + j] || fromI[(i * n) + j] != toI[(i * n) + j]) {
+                            moveButton(
+                                    MainActivity.PlaceholderFragment.gridIDs[(fromI[(i * n) + j] * n) + fromJ[(i * n) + j]],
+                                    MainActivity.PlaceholderFragment.gridIDs[(toI[(i * n) + j] * n) + toJ[(i * n) + j]],
+                                    getBoard()[(fromI[(i * n) + j] * n) + fromJ[(i * n) + j]],
+                                    getBoard()[(toI[(i * n) + j] * n) + toJ[(i * n) + j]]
+                            );
+                            alreadyChanghed.add(MainActivity.PlaceholderFragment.gridIDs[(toI[(i * n) + j] * n) + toJ[(i * n) + j]]);
+                        }
+                    }
+                }
+            }
+        });
+        t.start();
+    }
+
+    private void refreshColors() {
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
                 //move the button
                 String value = String.valueOf(getBoard()[(i * n) + j].getValue());
-                if (!value.equals("0")){
-                    MainActivity.PlaceholderFragment.gridIDs[(i*n)+j].setText(value);
-                    Colors.changeColor(MainActivity.PlaceholderFragment.gridIDs[(i*n)+j]);
+                if (!value.equals("0")) {
+                    MainActivity.PlaceholderFragment.gridIDs[(i * n) + j].setText(value);
+                    Colors.changeColor(MainActivity.PlaceholderFragment.gridIDs[(i * n) + j]);
                 } else {
-                    MainActivity.PlaceholderFragment.gridIDs[(i*n)+j].setText("");
-                    MainActivity.PlaceholderFragment.gridIDs[(i*n)+j].setBackgroundColor(Colors.V0);
+                    MainActivity.PlaceholderFragment.gridIDs[(i * n) + j].setText("");
+                    MainActivity.PlaceholderFragment.gridIDs[(i * n) + j].setBackgroundColor(Colors.V0);
                 }
 
             }
@@ -213,16 +255,16 @@ public class Game {
 
     public void up() {
         boolean changesMade = false;
-        int[] fromI = new int[n*n], toI = new int[n*n];
-        int[] fromJ = new int[n*n], toJ = new int[n*n];
+        int[] fromI = new int[n * n], toI = new int[n * n];
+        int[] fromJ = new int[n * n], toJ = new int[n * n];
         for (int i = 0; i < n; i++) {
             for (int j = 0; j < n; j++) {
                 if (!board[(i * n) + j].isEmpty()) {
                     int ii = i;
                     boolean flag = true;
 
-                    fromJ[(i*n)+j] = toJ[(i*n)+j] = j;
-                    fromI[(i*n)+j] = toI[(i*n)+j] = i;
+                    fromJ[(i * n) + j] = toJ[(i * n) + j] = j;
+                    fromI[(i * n) + j] = toI[(i * n) + j] = i;
 
                     while (flag && ii > 0) {
                         //if the cell on top is not empty
@@ -237,14 +279,14 @@ public class Game {
                                 flag = false;
                                 changesMade = true;
 
-                                toI[(i*n)+j] = ii-1;
+                                toI[(i * n) + j] = ii - 1;
                             }
                         } else {
                             board[((ii - 1) * n) + j] = new Cell(board[(ii * n) + j].getValue());
                             board[(ii * n) + j] = new Cell();
                             changesMade = true;
 
-                            toI[(i*n)+j] = ii-1;
+                            toI[(i * n) + j] = ii - 1;
 
                             //move the button
 //							moveButton(MainActivity.PlaceholderFragment.gridIDs[(fromY*n)+fromX], MainActivity.PlaceholderFragment.gridIDs[((toY)*n)+toX]);
@@ -263,8 +305,8 @@ public class Game {
 
     public void down() {
         boolean changesMade = false;
-        int[] fromI = new int[n*n], toI = new int[n*n];
-        int[] fromJ = new int[n*n], toJ = new int[n*n];
+        int[] fromI = new int[n * n], toI = new int[n * n];
+        int[] fromJ = new int[n * n], toJ = new int[n * n];
         for (int i = n - 1; i >= 0; i--) {
             for (int j = n - 1; j >= 0; j--) {
                 if (!board[(i * n) + j].isEmpty()) {
@@ -272,8 +314,8 @@ public class Game {
                     int jj = j;
                     boolean flag = true;
 
-                    fromJ[(i*n)+j] = toJ[(i*n)+j] = j;
-                    fromI[(i*n)+j] = toI[(i*n)+j] = i;
+                    fromJ[(i * n) + j] = toJ[(i * n) + j] = j;
+                    fromI[(i * n) + j] = toI[(i * n) + j] = i;
 
                     while (flag && ii < n - 1) {
                         //if the cell on top is not empty
@@ -288,14 +330,14 @@ public class Game {
                                 flag = false;
                                 changesMade = true;
 
-                                toI[(i*n)+j] = ii+1;
+                                toI[(i * n) + j] = ii + 1;
                             }
                         } else {
                             board[((ii + 1) * n) + j] = new Cell(board[(ii * n) + j].getValue());
                             board[(ii * n) + j] = new Cell();
                             changesMade = true;
 
-                            toI[(i*n)+j] = ii+1;
+                            toI[(i * n) + j] = ii + 1;
                         }
                         ii++;
                     }
@@ -310,8 +352,8 @@ public class Game {
 
     public void left() {
         boolean changesMade = false;
-        int[] fromI = new int[n*n], toI = new int[n*n];
-        int[] fromJ = new int[n*n], toJ = new int[n*n];
+        int[] fromI = new int[n * n], toI = new int[n * n];
+        int[] fromJ = new int[n * n], toJ = new int[n * n];
         for (int i = 0; i < n; i++) {
             for (int j = 0; j < n; j++) {
                 if (!board[(i * n) + j].isEmpty()) {
@@ -319,8 +361,8 @@ public class Game {
                     int jj = j;
                     boolean flag = true;
 
-                    fromJ[(i*n)+j] = toJ[(i*n)+j] = j;
-                    fromI[(i*n)+j] = toI[(i*n)+j] = i;
+                    fromJ[(i * n) + j] = toJ[(i * n) + j] = j;
+                    fromI[(i * n) + j] = toI[(i * n) + j] = i;
 
                     while (flag && jj > 0) {
                         //if the cell on top is not empty
@@ -335,14 +377,14 @@ public class Game {
                                 flag = false;
                                 changesMade = true;
 
-                                toJ[(i*n)+j] = jj-1;
+                                toJ[(i * n) + j] = jj - 1;
                             }
                         } else {
                             board[(i * n) + jj - 1] = new Cell(board[(i * n) + jj].getValue());
                             board[(i * n) + jj] = new Cell();
                             changesMade = true;
 
-                            toJ[(i*n)+j] = jj-1;
+                            toJ[(i * n) + j] = jj - 1;
                         }
                         jj--;
                     }
@@ -356,8 +398,8 @@ public class Game {
 
     public void right() {
         boolean changesMade = false;
-        int[] fromI = new int[n*n], toI = new int[n*n];
-        int[] fromJ = new int[n*n], toJ = new int[n*n];
+        int[] fromI = new int[n * n], toI = new int[n * n];
+        int[] fromJ = new int[n * n], toJ = new int[n * n];
         for (int i = n - 1; i >= 0; i--) {
             for (int j = n - 1; j >= 0; j--) {
                 if (!board[(i * n) + j].isEmpty()) {
@@ -365,8 +407,8 @@ public class Game {
                     int jj = j;
                     boolean flag = true;
 
-                    fromJ[(i*n)+j] = toJ[(i*n)+j] = j;
-                    fromI[(i*n)+j] = toI[(i*n)+j] = i;
+                    fromJ[(i * n) + j] = toJ[(i * n) + j] = j;
+                    fromI[(i * n) + j] = toI[(i * n) + j] = i;
 
                     while (flag && jj < n - 1) {
                         //if the cell on top is not empty
@@ -381,14 +423,14 @@ public class Game {
                                 flag = false;
                                 changesMade = true;
 
-                                toJ[(i*n)+j] = jj+1;
+                                toJ[(i * n) + j] = jj + 1;
                             }
                         } else {
                             board[(i * n) + jj + 1] = new Cell(board[(i * n) + jj].getValue());
                             board[(i * n) + jj] = new Cell();
                             changesMade = true;
 
-                            toJ[(i*n)+j] = jj+1;
+                            toJ[(i * n) + j] = jj + 1;
                         }
                         jj++;
                     }
@@ -399,7 +441,5 @@ public class Game {
         if (thereAreEmptyCells() && changesMade) generateNewValue();
         resetStackable();
     }
-
-
 }
 
